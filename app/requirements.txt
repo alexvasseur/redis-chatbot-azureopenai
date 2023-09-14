@@ -1,0 +1,11 @@
+redisvl
+langchain
+openai
+tiktoken
+redis==4.5.3
+python-dotenv==0.21.0
+streamlit==1.24.1
+streamlit-chat
+sentence-transformers==2.2.2
+altair==4.0
+pypdf

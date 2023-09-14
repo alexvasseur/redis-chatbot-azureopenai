@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+        - redis_data:/data
+  chatbot:
+      build:
+        context: ./
+      volumes:
+        - ./app/:/app
+      ports:
+        - "8080:8080"
+      env_file:
+        - .env
+      depends_on:
+        - redis
+
+volumes:
+  redis_data:

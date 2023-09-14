@@ -1,0 +1,23 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+redisvl = "*"
+langchain = "*"
+openai = "*"
+redis = "==4.5.3"
+python-dotenv = "==0.21.0"
+streamlit = "==1.24.1"
+streamlit-chat = "*"
+google-cloud-aiplatform = ">=1.26."
+sentence-transformers = "==2.2.2"
+altair = "==4.0"
+pypdf = "*"
+tiktoken = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
