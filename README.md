@@ -66,10 +66,18 @@ You can use
 
 Update the `REDIS_URL` based on your deployment
 ```
-REDIS_URL="redis://localhost:6379"
-or
+# if using the default "docker compose" with Redis Stack running in the "redis" container
+REDIS_URL="redis://redis:6379"
+# if running with Azure Cache Redis Enterprise
 REDIS_URL="redis://:password@yourendpoint.redis.cloud:6379"
+# if running code locally and running a standalone Redis Stack
+REDIS_URL="redis://localhost:6379"
+# if running code in docker container but have Redis running on your host machine
+REDIS_URL="redis://host.docker.internal:6379"
 ```
+
+TODO add TLS examples
+
 
 Example setup
 
