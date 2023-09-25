@@ -66,7 +66,7 @@ def configure_retriever(path):
     splits = text_splitter.split_documents(docs)
     # Create embeddings and store in vectordb
     # Implictly relies on env var see https://python.langchain.com/docs/integrations/text_embedding/azureopenai
-    embeddings = OpenAIEmbeddings(openai_api_type="azure", openai_api_version="2023-05-15", deployment=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT)
+    embeddings = OpenAIEmbeddings(deployment=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT)
     
 
     # Check if not already vectorized (currently at path level, not at path/file level)
@@ -86,11 +86,41 @@ def configure_retriever(path):
         embeddingsDone.sadd("doc:chatbot:path", path)
     else:
         print("Found existing embeddings in doc:chatbot:path for "+ path, flush=True)
+        schema = {
+            'text': [
+                {'name': 'source', 
+                 'weight': 1, 
+                 'no_stem': False, 
+                 'withsuffixtrie': False, 
+                 'no_index': False, 
+                 'sortable': False}, 
+                {'name': 'content', 
+                 'weight': 1, 
+                 'no_stem': False, 
+                 'withsuffixtrie': False, 
+                 'no_index': False, 
+                 'sortable': False}
+            ], 
+            'numeric': [
+                {'name': 'page', 
+                 'no_index': False, 
+                 'sortable': False}
+            ], 
+            'vector': [
+                {'name': 'content_vector', 
+                 'dims': 1536, 'algorithm': 'FLAT', 
+                 'datatype': 'FLOAT32', 
+                 'distance_metric': 'COSINE', 
+                 'initial_cap': 20000, 
+                 'block_size': 1000}
+            ]
+        }
+
         vectordb = Redis.from_existing_index(
                 embeddings,
                 index_name="chatbot",
                 redis_url=config.REDIS_URL,
-                schema = None
+                schema = schema
         )
 
     # Define retriever
@@ -102,26 +132,39 @@ def configure_retriever(path):
 @st.cache_resource()
 def configure_cache():
     """Set up the Redis LLMCache built with OpenAI Text Embeddings"""
-    #llmcache_embeddings = OpenAITextVectorizer(
-    #    model=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT,
-    #    api_config={"api_key": config.OPENAI_API_KEY}
-    #)
+    llmcache_embeddings = OpenAITextVectorizer(
+        model=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT,
+        api_config={"api_key": config.OPENAI_API_KEY}
+    )
 
     # https://github.com/RedisVentures/redisvl/blob/10c192d2ab41a0aea330eea43266f12c8afbf2a3/redisvl/llmcache/semantic.py#L13
     # Defaults to 768 dimensions but we have 1536
-    #index=SearchIndex("llmcache_index", "llmcache", [VectorField(
-    #        "prompt_vector",
-    #        "FLAT",
-    #        {"DIM": 1536, "TYPE": "FLOAT32", "DISTANCE_METRIC": "COSINE"},
-    #    )])
-    #index.connect(config.REDIS_URL)
+    schema = {
+        "index": {
+            "name": "cache",
+            "prefix": "llmcache",
+        },
+        "fields": {
+            "vector": [{
+                    "name": "prompt_vector",
+                    "dims": 1536,
+                    "distance_metric": "cosine",
+                    "algorithm": "flat",
+                    "datatype": "float32"}
+            ]
+        },
+    }
+
+    cache = SearchIndex.from_dict(schema)
+    cache.connect(config.REDIS_URL)
+    cache.create(overwrite=True)
 
     return SemanticCache(
         redis_url=config.REDIS_URL,
-        threshold=0.7, #config.LLMCACHE_THRESHOLD, # semantic similarity threshold
-        #vectorizer=llmcache_embeddings,
+        threshold=config.LLMCACHE_THRESHOLD, # semantic similarity threshold
+        vectorizer=llmcache_embeddings,
+        index=cache
     )
-
 
 def configure_agent(chat_memory, tools: list):
     """Configure the conversational chat agent that can use the Redis vector db for RAG"""
@@ -130,12 +173,6 @@ def configure_agent(chat_memory, tools: list):
     )
     chatLLM = AzureChatOpenAI(
         deployment_name=config.OPENAI_AZURE_LLM_DEPLOYMENT
-        #openai_api_base=
-        #openai_api_version="2023-05-15",
-        #deployment_name=DEPLOYMENT_NAME,
-        #openai_api_key=API_KEY,
-        #openai_api_type="azure"
-        #temperature=0.1,
     )
     PREFIX = """"You are a friendly AI assistant that can help you understand your Chevy 2022 Colorado vehicle based on the provided PDF car manual. Users can ask questions of your manual! You should not make anything up."""
 
@@ -188,14 +225,14 @@ class PrintRetrievalHandler(BaseCallbackHandler):
     def __init__(self, container):
         self.container = container.expander("Context Retrieval")
 
-    def on_retriever_start(self, query: str, **kwargs):
+    def on_retriever_start(self, serialized: dict, query: str, **kwargs):
         self.container.write(f"**Question:** {query}")
 
     def on_retriever_end(self, documents, **kwargs):
-        # self.container.write(documents)
         for idx, doc in enumerate(documents):
             source = os.path.basename(doc.metadata["source"])
-            self.container.write(f"**Document {idx} from {source}**")
+            page = os.path.basename(doc.metadata["page"])
+            self.container.write(f"**Document {idx} from {source}, page {page}**")
             self.container.markdown(doc.page_content)
 
 
