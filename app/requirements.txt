@@ -1,6 +1,6 @@
 redisvl
 langchain
-openai
+openai==0.28
 tiktoken
 redis==4.5.3
 python-dotenv==0.21.0
