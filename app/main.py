@@ -56,9 +56,10 @@ def configure_retriever(path):
     # Read documents
     docs = []
     for file in os.listdir(path):
-        print(file, flush=True)
-        loader = PyPDFLoader(os.path.join(path, file))
-        docs.extend(loader.load())
+        if file != '.DS_Store':
+            print(file, flush=True)
+            loader = PyPDFLoader(os.path.join(path, file))
+            docs.extend(loader.load())
     # Split documents
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=config.CHUNK_SIZE, chunk_overlap=config.CHUNK_OVERLAP
