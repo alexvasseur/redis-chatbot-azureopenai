@@ -1,6 +1,13 @@
+# using CPU only for Torch to avoid 10GB of dependencies
+# see also
+# https://github.com/UKPLab/sentence-transformers/issues/1409
+#
+--extra-index-url https://download.pytorch.org/whl/cpu
 redisvl
-langchain
-openai
+langchain-core
+langchain-community
+langchain-openai
+#openai
 tiktoken
 redis==4.5.3
 python-dotenv==0.21.0

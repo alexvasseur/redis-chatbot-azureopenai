@@ -115,6 +115,8 @@ Using Redis Insight you can observe the data model in Redis:
 It can be useful to also run the app locally if you modify the code and want to quickly test it:
 
 ```
+cd app
+
 # install or upgrade pipenv
 python3 -m pip install -U pipenv
 
@@ -128,3 +130,10 @@ pipenv shell
 streamlit run main.py --server.port 8080 --server.enableXsrfProtection false
 ```
 
+# Parking lot
+
+## Dependencies analysis
+
+docker exec -it 366fc19d3cfd /bin/bash
+pip install pipdeptree
+pipdeptree

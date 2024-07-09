@@ -22,13 +22,13 @@ from redisvl.index import SearchIndex
 from redisvl.vectorize.text import OpenAITextVectorizer
 import tiktoken #required for OpenAI
 
-from langchain.chat_models import AzureChatOpenAI
-from langchain.document_loaders import PyPDFLoader
+from langchain_openai import AzureChatOpenAI
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.memory import ConversationBufferMemory
-from langchain.memory.chat_message_histories import RedisChatMessageHistory
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_community.chat_message_histories import RedisChatMessageHistory
+from langchain_openai import AzureOpenAIEmbeddings
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain.vectorstores import Redis
+from langchain_community.vectorstores import Redis
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain.agents import AgentType
@@ -66,12 +66,12 @@ def configure_retriever(path):
     splits = text_splitter.split_documents(docs)
     # Create embeddings and store in vectordb
     # Implictly relies on env var see https://python.langchain.com/docs/integrations/text_embedding/azureopenai
-    embeddings = OpenAIEmbeddings(openai_api_type="azure", openai_api_version="2023-05-15", deployment=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT)
+    embeddings = AzureOpenAIEmbeddings(openai_api_version="2023-05-15", azure_deployment=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT)
     
 
     # Check if not already vectorized (currently at path level, not at path/file level)
     embeddingsDone = redisclient.Redis.from_url(config.REDIS_URL)
-    embeddingsDoneForDoc = embeddingsDone.sismember("doc:chatbot:path", path)
+    embeddingsDoneForDoc = embeddingsDone.sismember("doc:pdf:path", path)
     if not embeddingsDoneForDoc:
         # Azure OpenAI limit inputs at 16 for now
         vectordb = None
@@ -83,9 +83,9 @@ def configure_retriever(path):
             else:
                 #foo = True
                 vectordb.add_documents(splitN)
-        embeddingsDone.sadd("doc:chatbot:path", path)
+        embeddingsDone.sadd("doc:pdf:path", path)
     else:
-        print("Found existing embeddings in doc:chatbot:path for "+ path, flush=True)
+        print("Found existing embeddings in 'doc:pdf:path' for "+ path, flush=True)
         vectordb = Redis.from_existing_index(
                 embeddings,
                 index_name="chatbot",
@@ -236,7 +236,7 @@ def render():
 
     # Sidebar
     with st.sidebar:
-        st.image("https://redis.com/wp-content/themes/wpx/assets/images/logo-redis.svg?auto=webp&quality=85,75&width=120")
+        st.image("https://redis.io/wp-content/uploads/2024/04/Logotype.svg?auto=webp&quality=90,75&width=240")
         st.markdown("""
 **Vector Database** - *Making it easy to build Generative AI applications with Redis Enterprise.*
 - Session store
@@ -255,7 +255,6 @@ and more!
 - Fully managed with Redis Enterprise Cloud (GCP, AWS, Azure)                    
 """)
         st.divider()
-        #st.image("https://redis.com/wp-content/uploads/2023/03/vector-similarity-diagram-1.svg?&auto=webp&quality=85,75&width=1200")        
         use_cache = st.checkbox("Use LLM cache?")
         if st.button("Clear LLM cache"):
             llmcache.clear()

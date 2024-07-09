@@ -2,6 +2,8 @@ import os
 
 
 class AppConfig:
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
     DOCS_FOLDER=os.environ["DOCS_FOLDER"]
     REDIS_URL=os.environ["REDIS_URL"]
     
@@ -14,4 +16,4 @@ class AppConfig:
 
     OPENAI_AZURE_EMBEDDING_DEPLOYMENT=os.environ["OPENAI_AZURE_EMBEDDING_DEPLOYMENT"]
     OPENAI_AZURE_LLM_DEPLOYMENT=os.environ["OPENAI_AZURE_LLM_DEPLOYMENT"]
-    OPENAI_API_KEY=os.environ["OPENAI_API_KEY"]
+    AZURE_OPENAI_API_KEY=os.environ["AZURE_OPENAI_API_KEY"]

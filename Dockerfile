@@ -7,6 +7,13 @@ WORKDIR /app
 COPY app/requirements.txt .
 
 RUN python -m pip install --upgrade pip
+
+# Alternative way to avoid downloading 10GB of GPU dependencies
+# from sentence-transformers
+#RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#RUN pip install transformers tqdm numpy scikit-learn scipy nltk sentencepiece
+#RUN pip install --no-deps sentence-transformers
+
 RUN pip install -r requirements.txt
 
 EXPOSE 8080
