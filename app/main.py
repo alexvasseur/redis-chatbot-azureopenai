@@ -12,15 +12,9 @@ load_dotenv("../.env", verbose=True)
 from config import AppConfig
 
 from redisvl.extensions.llmcache.semantic import SemanticCache
-
-# we need those to fine tune vector dimension for openAI which is larger than default
 import redis as redisclient
-from redis.commands.search.field import VectorField
-from redisvl.index import SearchIndex
 
-
-#from redisvl.vectorize.text import OpenAITextVectorizer
-import tiktoken #required for OpenAI
+#import tiktoken #required for OpenAI
 
 from langchain_openai import AzureChatOpenAI
 from langchain_community.document_loaders import PyPDFLoader
@@ -67,7 +61,7 @@ def configure_retriever(path):
     splits = text_splitter.split_documents(docs)
     # Create embeddings and store in vectordb
     # Implictly relies on env var see https://python.langchain.com/docs/integrations/text_embedding/azureopenai
-    embeddings = AzureOpenAIEmbeddings(openai_api_version="2023-05-15", azure_deployment=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT)
+    embeddings = AzureOpenAIEmbeddings(openai_api_version="2023-05-15", azure_deployment=config.CHATBOT_EMBEDDING_DEPLOYMENT)
     
 
     # Check if not already vectorized (currently at path level, not at path/file level)
@@ -103,38 +97,10 @@ def configure_retriever(path):
 @st.cache_resource()
 def configure_cache():
     """Set up the Redis LLMCache built with OpenAI Text Embeddings"""
-    #llmcache_embeddings = OpenAITextVectorizer(
-    #    model=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT,
-    #    api_config={"api_key": config.AZURE_OPENAI_API_KEY}
-    #)
-
-    # https://github.com/RedisVentures/redisvl/blob/10c192d2ab41a0aea330eea43266f12c8afbf2a3/redisvl/llmcache/semantic.py#L13
-    # Defaults to 768 dimensions but we have 1536
-    #schema = {
-    #    "index": {
-    #        "name": "cache",
-    #        "prefix": "llmcache",
-    #    },
-    #    "fields": {
-    #        "vector": [{
-    #                "name": "prompt_vector",
-    #                "dims": 1536,
-    #                "distance_metric": "cosine",
-    #                "algorithm": "flat",
-    #                "datatype": "float32"}
-    #        ]
-    #    },
-    #}
-
-    #cache = SearchIndex.from_dict(schema)
-    #cache.connect(config.REDIS_URL)
-    #cache.create(overwrite=True)
-
     return SemanticCache(
         redis_url=config.REDIS_URL,
         distance_threshold=config.LLMCACHE_THRESHOLD, # semantic similarity threshold
         #vectorizer=llmcache_embeddings, # defaults to HFTextVectorizer
-        #index=cache
         name="llmcache"
     )
 
@@ -144,7 +110,7 @@ def configure_agent(chat_memory, tools: list):
         memory_key="chat_history", chat_memory=chat_memory, return_messages=True
     )
     chatLLM = AzureChatOpenAI(
-        deployment_name=config.OPENAI_AZURE_LLM_DEPLOYMENT
+        deployment_name=config.CHATBOT_LLM_DEPLOYMENT
     )
     PREFIX = """"You are a friendly AI assistant that can help you understand your Chevy 2022 Colorado vehicle based on the provided PDF car manual. Users can ask questions of your manual! You should not make anything up."""
 
@@ -257,9 +223,9 @@ def render():
 and more!
                     
 **Real time and Scalable for production** - *Perfectly suited for the massive performance and scalability requirements of AI applications.*
-- Get started with open source, Redis Stack and a vibrant ecosystem
+- Get started with Redis Community Edition and a vibrant ecosystem
 - Scale with Redis Enterprise
-- In-memory architecture with full persistence and RAM/Flash auto-tiering 
+- In-memory architecture with full persistence and RAM/SSD auto-tiering 
 - Highly available, clustered database and geo-cluster architecture
 - On any cloud, Kubernetes or private cloud
 - Fully managed with Redis Enterprise Cloud (GCP, AWS, Azure)                    

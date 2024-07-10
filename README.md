@@ -48,8 +48,9 @@ The project comes with a template `.env.template` file with the following values
 ```bash
 AZURE_OPENAI_ENDPOINT = "https://ava-openai.openai.azure.com"
 AZURE_OPENAI_API_KEY = "1234567890abcdefghijklmnopqrstuvwxyz"
-OPENAI_AZURE_EMBEDDING_DEPLOYMENT = "ava-model-embedding"
-OPENAI_AZURE_LLM_DEPLOYMENT = "ava-model-text"
+
+CHATBOT_EMBEDDING_DEPLOYMENT = "ava-model-embedding"
+CHATBOT_LLM_DEPLOYMENT = "ava-model-text"
 
 OPENAI_API_TYPE = "azure"
 OPENAI_API_VERSION = "2023-05-15"
