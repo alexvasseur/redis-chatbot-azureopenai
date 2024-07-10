@@ -46,8 +46,8 @@ The project comes with a template `.env.template` file with the following values
 
 *Please note how the variable maps to the deployment your created in Azure OpenAI.*
 ```bash
-OPENAI_API_BASE = "https://ava-openai.openai.azure.com"
-OPENAI_API_KEY = "1234567890abcdefghijklmnopqrstuvwxyz"
+AZURE_OPENAI_ENDPOINT = "https://ava-openai.openai.azure.com"
+AZURE_OPENAI_API_KEY = "1234567890abcdefghijklmnopqrstuvwxyz"
 OPENAI_AZURE_EMBEDDING_DEPLOYMENT = "ava-model-embedding"
 OPENAI_AZURE_LLM_DEPLOYMENT = "ava-model-text"
 

@@ -3,12 +3,12 @@
 # https://github.com/UKPLab/sentence-transformers/issues/1409
 #
 --extra-index-url https://download.pytorch.org/whl/cpu
-redisvl
+#redis - dependency from redisvl
+git+https://github.com/RedisVentures/redisvl.git@main
 langchain-core
 langchain-community
 langchain-openai
 tiktoken
-redis==4.5.3
 python-dotenv==0.21.0
 streamlit==1.24.1
 streamlit-chat

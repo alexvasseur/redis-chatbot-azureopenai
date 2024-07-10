@@ -9,10 +9,8 @@ verify_ssl = true
 name = "downloadpytorch"
 
 [packages]
-redisvl = "*"
 langchain = "*"
 openai = "*"
-redis = "==4.5.3"
 python-dotenv = "==0.21.0"
 streamlit = "==1.24.1"
 streamlit-chat = "*"
@@ -24,6 +22,7 @@ tiktoken = "*"
 langchain-core = "*"
 langchain-community = "*"
 langchain-openai = "*"
+redisvl = {ref = "main", git = "git+https://github.com/RedisVentures/redisvl.git"}
 
 [dev-packages]
 

@@ -11,7 +11,7 @@ load_dotenv("../.env", verbose=True)
 
 from config import AppConfig
 
-from redisvl.llmcache.semantic import SemanticCache
+from redisvl.extensions.llmcache.semantic import SemanticCache
 
 # we need those to fine tune vector dimension for openAI which is larger than default
 import redis as redisclient
@@ -19,7 +19,7 @@ from redis.commands.search.field import VectorField
 from redisvl.index import SearchIndex
 
 
-from redisvl.vectorize.text import OpenAITextVectorizer
+#from redisvl.vectorize.text import OpenAITextVectorizer
 import tiktoken #required for OpenAI
 
 from langchain_openai import AzureChatOpenAI
@@ -103,38 +103,39 @@ def configure_retriever(path):
 @st.cache_resource()
 def configure_cache():
     """Set up the Redis LLMCache built with OpenAI Text Embeddings"""
-    llmcache_embeddings = OpenAITextVectorizer(
-        model=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT,
-        api_config={"api_key": config.OPENAI_API_KEY}
-    )
+    #llmcache_embeddings = OpenAITextVectorizer(
+    #    model=config.OPENAI_AZURE_EMBEDDING_DEPLOYMENT,
+    #    api_config={"api_key": config.AZURE_OPENAI_API_KEY}
+    #)
 
     # https://github.com/RedisVentures/redisvl/blob/10c192d2ab41a0aea330eea43266f12c8afbf2a3/redisvl/llmcache/semantic.py#L13
     # Defaults to 768 dimensions but we have 1536
-    schema = {
-        "index": {
-            "name": "cache",
-            "prefix": "llmcache",
-        },
-        "fields": {
-            "vector": [{
-                    "name": "prompt_vector",
-                    "dims": 1536,
-                    "distance_metric": "cosine",
-                    "algorithm": "flat",
-                    "datatype": "float32"}
-            ]
-        },
-    }
+    #schema = {
+    #    "index": {
+    #        "name": "cache",
+    #        "prefix": "llmcache",
+    #    },
+    #    "fields": {
+    #        "vector": [{
+    #                "name": "prompt_vector",
+    #                "dims": 1536,
+    #                "distance_metric": "cosine",
+    #                "algorithm": "flat",
+    #                "datatype": "float32"}
+    #        ]
+    #    },
+    #}
 
-    cache = SearchIndex.from_dict(schema)
-    cache.connect(config.REDIS_URL)
-    cache.create(overwrite=True)
+    #cache = SearchIndex.from_dict(schema)
+    #cache.connect(config.REDIS_URL)
+    #cache.create(overwrite=True)
 
     return SemanticCache(
         redis_url=config.REDIS_URL,
-        threshold=config.LLMCACHE_THRESHOLD, # semantic similarity threshold
-        vectorizer=llmcache_embeddings,
-        index=cache
+        distance_threshold=config.LLMCACHE_THRESHOLD, # semantic similarity threshold
+        #vectorizer=llmcache_embeddings, # defaults to HFTextVectorizer
+        #index=cache
+        name="llmcache"
     )
 
 def configure_agent(chat_memory, tools: list):
@@ -215,10 +216,11 @@ def generate_response(
 ) -> str:
     """Generate a response to the user's question after checking the cache (if enabled)."""
     t0 = time()
+    print("GENERATE RESPONSE", flush=True)
     if use_cache:
         if response := llmcache.check(user_query):
             print("Cache Response Time (secs)", time()-t0, flush=True)
-            return response[0]
+            return response[0]['response']
         else:
             print("No relevant cache entry found")
 
@@ -291,8 +293,9 @@ and more!
             response = generate_response(use_cache, llmcache, user_query, agent)
             st.markdown(response)
             if use_cache:
-                # TODO - should we cache responses that were used from the cache?
-                llmcache.store(user_query, response)
+                print(user_query)
+                print(response)
+                llmcache.store(prompt=user_query, response=response)
 
 
 if __name__ == "__main__":
